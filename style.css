@@ -356,3 +356,6 @@ html[data-size=large] .fb{font-size:17px}
 /* ---------- reduce motion (manual switch) ---------- */
 html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 html[data-motion=reduce]{scroll-behavior:auto}
+
+#settings .inst{width:100%}
+#settings #inst-msg{margin:.5em 0 0}

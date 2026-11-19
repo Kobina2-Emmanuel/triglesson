@@ -1102,6 +1102,27 @@ function initSettings() {
   btn.addEventListener('click', () => { const open = panel.hidden; panel.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) { const f = $('.seg button[aria-checked=true]', panel); if (f) f.focus({ preventScroll: true }); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { close(); btn.focus(); } });
   document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) close(); });
+  /* install app: native prompt where the browser offers one, written steps elsewhere */
+  const ib = $('#set-install'), im = $('#inst-msg');
+  let deferred = null;
+  const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const showInstalled = () => { ib.disabled = true; ib.textContent = 'App installed'; im.hidden = true; };
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
+  window.addEventListener('appinstalled', () => { deferred = null; showInstalled(); });
+  if (standalone()) showInstalled();
+  ib.addEventListener('click', async () => {
+    if (deferred) {
+      deferred.prompt();
+      try { await deferred.userChoice; } catch (e) { /* ignore */ }
+      deferred = null; return;
+    }
+    im.hidden = false;
+    im.textContent = isIOS
+      ? 'On iPhone or iPad: tap the Share button in Safari, then choose Add to Home Screen.'
+      : location.protocol === 'file:' ? 'Open the lesson from its web address first. Installing does not work from a local file.'
+      : 'Open your browser menu and choose Install app (or Add to Home screen). If you do not see it, reload once while online.';
+  });
   apply();
 }
 

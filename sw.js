@@ -2,7 +2,7 @@
    - Own files: network first (so online users always get the latest deploy), cache as fallback.
    - CDN files (Three.js, KaTeX, fonts): cache first. All saved on the first online visit.
    BUMP `VERSION` whenever you deploy changes, so old caches are cleared. */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CORE = 'angles-core-' + VERSION;
 const CDN = 'angles-cdn-' + VERSION;
 
