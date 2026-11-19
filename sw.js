@@ -2,9 +2,9 @@
    - Own files: network first (so online users always get the latest deploy), cache as fallback.
    - CDN files (Three.js, KaTeX, fonts): cache first. All saved on the first online visit.
    BUMP `VERSION` whenever you deploy changes, so old caches are cleared. */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CORE = 'angles-core-' + VERSION;
-const CDN = 'angles-cdn-' + VERSION;
+const CDN = 'angles-cdn'; /* not versioned: these URLs are pinned, and a failed refresh must never wipe working copies */
 
 const LOCAL = ['./', 'index.html', 'style.css', 'script.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
@@ -48,12 +48,30 @@ async function complete() {
   const hits = await Promise.all(CDN_JS.concat(CDN_CSS).map(u => cache.match(u)));
   return hits.every(Boolean);
 }
+/* save whatever CDN files are still missing (also re-saves fonts); safe to run many times */
+async function fill() {
+  const cache = await caches.open(CDN);
+  for (const u of CDN_JS) if (!(await cache.match(u))) await saveUrl(cache, u);
+  for (const u of CDN_CSS) {
+    const hit = await cache.match(u);
+    if (!hit) { await saveCss(cache, u); continue; }
+    const text = await hit.clone().text();
+    const fonts = Array.from(text.matchAll(/url\(([^)]+)\)/g)).map(m => m[1].replace(/['"]/g, '').trim()).filter(f => /\.woff2(\?|$)/.test(f)).map(f => new URL(f, u).href);
+    for (const f of fonts) if (!(await cache.match(f))) await saveUrl(cache, f);
+  }
+  return complete();
+}
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     await (await caches.open(CORE)).addAll(LOCAL);
+    /* carry over copies saved by older versions (their caches are deleted on activate) */
     const cdn = await caches.open(CDN);
-    await Promise.all(CDN_JS.map(u => saveUrl(cdn, u)).concat(CDN_CSS.map(u => saveCss(cdn, u))));
+    for (const k of await caches.keys()) if (k.startsWith('angles-cdn-')) {
+      const old = await caches.open(k);
+      for (const r of await old.keys()) if (!(await cdn.match(r))) { const m = await old.match(r); if (m) await cdn.put(r, m); }
+    }
+    try { await fill(); } catch (e) { /* page will ask again */ }
     await self.skipWaiting();
   })());
 });
@@ -64,6 +82,16 @@ self.addEventListener('activate', e => {
     await self.clients.claim();
     const full = await complete();
     for (const c of await self.clients.matchAll({ includeUncontrolled: true })) c.postMessage({ type: 'offline-ready', full });
+  })());
+});
+
+self.addEventListener('message', e => {
+  const t = e.data && e.data.type;
+  if (t !== 'warm' && t !== 'status') return;
+  e.waitUntil((async () => {
+    let full = false;
+    try { full = t === 'warm' ? await fill() : await complete(); } catch (err) { /* offline */ }
+    if (e.source) e.source.postMessage({ type: 'offline-ready', full, check: true });
   })());
 });
 

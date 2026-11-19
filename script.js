@@ -1108,20 +1108,25 @@ function initSettings() {
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const showInstalled = () => { ib.disabled = true; ib.textContent = 'App installed'; im.hidden = true; };
+  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) { const o = $('#off-status'); if (o) o.textContent = 'Offline mode needs the deployed https website (not a local file).'; }
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
   window.addEventListener('appinstalled', () => { deferred = null; showInstalled(); });
   if (standalone()) showInstalled();
   ib.addEventListener('click', async () => {
-    if (deferred) {
-      deferred.prompt();
-      try { await deferred.userChoice; } catch (e) { /* ignore */ }
-      deferred = null; return;
-    }
     im.hidden = false;
+    if (deferred) {
+      im.textContent = 'Waiting for your browser…';
+      let r = null;
+      try { deferred.prompt(); r = await deferred.userChoice; } catch (e) { /* ignore */ }
+      deferred = null;
+      im.textContent = r && r.outcome === 'accepted' ? 'Installing. Look for the app on your home screen or desktop.'
+        : 'No install window? Use your browser menu (three dots) and choose Install app. If you cancelled, you can try again after reloading.';
+      return;
+    }
     im.textContent = isIOS
       ? 'On iPhone or iPad: tap the Share button in Safari, then choose Add to Home Screen.'
       : location.protocol === 'file:' ? 'Open the lesson from its web address first. Installing does not work from a local file.'
-      : 'Open your browser menu and choose Install app (or Add to Home screen). If you do not see it, reload once while online.';
+      : 'Your browser has not offered a one-tap install yet. Open its menu (three dots) and choose Install app or Add to Home screen. If you do not see it, reload once while online. In-app browsers (inside other apps) cannot install; open the link in Chrome or Safari.';
   });
   apply();
 }
@@ -1219,11 +1224,15 @@ function toast(msg) {
 }
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   const firstVisit = !navigator.serviceWorker.controller;
+  const offEl = () => document.getElementById('off-status');
+  const setOff = full => { const el = offEl(); if (el) el.textContent = full ? 'Offline mode: ready. The 3D models and formulas are saved on this device.' : 'Offline mode: not saved yet. Stay online with this page open for a minute, then check again.'; };
+  const ask = type => navigator.serviceWorker.ready.then(reg => { if (reg.active) reg.active.postMessage({ type }); }).catch(() => {});
   navigator.serviceWorker.addEventListener('message', e => {
-    if (firstVisit && e.data && e.data.type === 'offline-ready') toast(e.data.full ? 'Saved. This lesson now works offline.' : 'Saving for offline use. Stay online a little longer.');
+    if (e.data && e.data.type === 'offline-ready') setOff(e.data.full);
+    if (firstVisit && e.data && e.data.type === 'offline-ready' && !e.data.check) toast(e.data.full ? 'Saved. This lesson now works offline.' : 'Saving for offline use. Stay online a little longer.');
   });
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* offline mode unavailable, site still works online */ }));
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(() => ask(navigator.onLine ? 'warm' : 'status')).catch(() => { const el = offEl(); if (el) el.textContent = 'Offline mode is not available in this browser.'; }));
   window.addEventListener('offline', () => toast('You are offline. The lesson still works.'));
-  window.addEventListener('online', () => toast('Back online.'));
+  window.addEventListener('online', () => { toast('Back online.'); ask('warm'); });
 }
 })();
