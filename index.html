@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Angles of Elevation and Depression | Interactive Lesson</title>
+<meta name="description" content="A 3D interactive Core Mathematics lesson on angles of elevation and depression.">
+<meta name="theme-color" content="#0b6e4f">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Elevation">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="splash">
+  <div class="sp glass">
+    <svg viewBox="0 0 200 110" aria-hidden="true">
+      <line x1="20" y1="60" x2="180" y2="60" stroke="#16352c" stroke-opacity=".45" stroke-dasharray="4 4"/>
+      <rect x="150" y="20" width="24" height="70" rx="3" fill="#0b6e4f1a" stroke="#0b6e4f66"/>
+      <line class="up" x1="20" y1="60" x2="180" y2="60" stroke="#c98a1b" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="dn" x1="20" y1="60" x2="180" y2="60" stroke="#1b8a9a" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="20" cy="60" r="5" fill="#16352c"/>
+    </svg>
+    <h1>Angles of Elevation<br>and Depression</h1>
+    <p>Core Mathematics, SHS 3. A 60-minute lesson in 3D.</p>
+    <div class="bar"><i></i></div>
+    <button id="go" class="main" disabled>Loading…</button>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+<div id="labels"><span id="lt"></span><span id="ld"></span><span id="lh"></span><span id="lH"></span></div>
+
+<div id="sbback"></div>
+<aside id="sidebar" class="glass" aria-label="Lesson menu">
+  <div class="sb-head">
+    <div class="sb-logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M21 20V6L3 20"/><path d="M9 20a6 6 0 0 0-2.6-4.9"/></svg></div>
+    <div class="sb-title"><b>Elevation and Depression</b><small>Core Mathematics</small></div>
+  </div>
+  <nav id="steps" aria-label="Lesson steps"></nav>
+  <div class="sb-foot"><span>Steps visited</span><b id="sbcount">0 / 9</b></div>
+</aside>
+
+<header class="glass">
+  <button id="sbtoggle" class="icon" type="button" aria-label="Toggle lesson menu" aria-expanded="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+  <b>Elevation and Depression</b>
+  <div class="prog"><i id="pg"></i></div>
+</header>
+
+<main>
+<section data-s="rpk" data-n="Review"><div class="card glass">
+  <span class="chip">0 to 4 min</span><h2>Recall the right-angled triangle</h2>
+  <p>In \(\triangle ABC\), right-angled at \(B\), sides are named from angle \(\theta\) at \(A\): \(|AC|\) is the hypotenuse, \(|CB|\) the opposite and \(|AB|\) the adjacent.</p>
+  <div class="eq">\[\sin\theta=\frac{\text{Opp}}{\text{Hyp}}\qquad\cos\theta=\frac{\text{Adj}}{\text{Hyp}}\qquad\tan\theta=\frac{\text{Opp}}{\text{Adj}}\]</div>
+  <p>To find an angle, use the inverse: \(\theta=\tan^{-1}\!\left(\dfrac{\text{Opp}}{\text{Adj}}\right)\). Set your calculator to Degree mode: \(\tan 45^\circ\) must give \(1\).</p>
+  <div class="q" data-a="CB"><h3>Which side is opposite \(\theta\)?</h3>
+    <button data-v="AB">\(|AB|\)</button> <button data-v="CB">\(|CB|\)</button> <button data-v="AC">\(|AC|\)</button><p class="fb"></p></div>
+</div></section>
+
+<section data-s="obj" data-n="Objectives"><div class="card glass">
+  <span class="chip">4 to 6 min</span><h2>Lesson objectives</h2>
+  <p>By the end of this lesson, you should be able to:</p>
+  <ul class="objs">
+    <li><label><input type="checkbox"><span>Define the <b>angle of elevation</b> and the <b>angle of depression</b>.</span></label></li>
+    <li><label><input type="checkbox"><span>Explain why \(\theta_{\text{depression}}=\theta_{\text{elevation}}\) using alternate angles.</span></label></li>
+    <li><label><input type="checkbox"><span>Use \(\sin\theta\), \(\cos\theta\) and \(\tan\theta\) to find heights, distances and angles.</span></label></li>
+  </ul>
+  <p class="small">Tick each objective as you work through the lesson.</p>
+</div></section>
+
+<section data-s="d0" data-n="Demo"><div class="card glass">
+  <span class="chip">6 to 13 min</span><h2>Watch Kwame and Ama</h2>
+  <p>Kwame is the observer. Ama is the three-storey block. Step through, then discuss in your groups.</p>
+  <div class="btns"><button data-sc="d0" class="on">1 Straight ahead</button><button data-sc="d1">2 Raise head</button><button data-sc="d2">3 Lower head</button><button data-sc="d3">4 Ama on the roof</button></div>
+  <ol class="small"><li>Which three directions did Kwame look, and which was his starting line?</li><li>What figure formed between his straight look and his new line of sight?</li><li>In Step 4, how did the two head movements compare?</li></ol>
+  <button id="name" class="main">Name the angles</button>
+  <p id="named" hidden>The angle <b>above</b> the horizontal is the <b>angle of elevation</b>. The angle <b>below</b> it is the <b>angle of depression</b>.</p>
+</div></section>
+
+<section data-s="concept" data-n="Concept"><div class="card glass">
+  <span class="chip">13 to 18 min</span><h2>Angles of elevation and depression</h2>
+  <p>Both angles are measured from the <b>horizontal line of sight</b>: the level line running straight out from the observer's eye. Choose a view, then drag the model to look at it from different sides.</p>
+  <div class="btns"><button data-sc="c0" class="on">Elevation</button><button data-sc="c1">Depression</button><button data-sc="c2">Compare</button></div>
+  <div class="def" data-for="c0">
+    <p>The <b>angle of elevation</b> is the angle between the horizontal line of sight and the line of sight <b>up</b> to an object above the observer's eye level.</p>
+    <p class="rule">Look up: the angle opens <b>above</b> the horizontal. Here the observer on the shore looks up at the lamp of the lighthouse.</p>
+  </div>
+  <div class="def" data-for="c1" hidden>
+    <p>The <b>angle of depression</b> is the angle between the horizontal line of sight and the line of sight <b>down</b> to an object below the observer's eye level.</p>
+    <p class="rule">Look down: the angle opens <b>below</b> the horizontal. Here the keeper at the lamp looks down at a boat.</p>
+  </div>
+  <div class="def" data-for="c2" hidden>
+    <p>Look from the shore to the lamp, then from the lamp back to the shore. The two horizontal lines are parallel, so the angles are <b>alternate angles</b> and are equal.</p>
+    <div class="eq">\[\theta_{\text{depression}}=\theta_{\text{elevation}}\]</div>
+  </div>
+</div></section>
+
+<section data-s="model" data-n="Model"><div class="card glass">
+  <span class="chip">18 to 24 min</span><h2>The sightline model</h2>
+  <p>The horizontal line of sight runs level from the observer's eye. Swing the arrow with the slider.</p>
+  <label class="sl">Angle \(\theta\) <input id="ang" type="range" min="10" max="60" value="35" aria-label="Angle in degrees"> <output id="angv"></output></label>
+  <label class="sw"><input id="zt" type="checkbox" checked> Show the Z-angle</label>
+  <p>The two horizontal lines are parallel, so the angle of depression from the roof equals the angle of elevation from the observer:</p>
+  <div class="eq">\[\theta_{\text{depression}}=\theta_{\text{elevation}}\quad(\text{alternate angles})\]</div>
+  <p class="rule"><b>Golden rule.</b> Both angles are measured from the horizontal, never from a vertical wall, pole or cliff.</p>
+</div></section>
+
+<section data-s="ex1" data-n="Example 1"><div class="card glass">
+  <span class="chip">24 to 30 min</span><h2>Example 1: height of a flagpole</h2>
+  <p>From level ground 20 m from the foot of a vertical flagpole, the angle of elevation of its top is \(35^\circ\). Find the height to 2 decimal places.</p>
+  <ol class="steps"><li class="show">Sketch the triangle: \(\text{Opp}=h,\ \text{Adj}=20\text{ m},\ \theta=35^\circ\).</li><li>Choose the ratio: \(\tan 35^\circ=\dfrac{h}{20}\).</li><li>Make \(h\) the subject: \(h=20\tan 35^\circ\).</li><li>Compute: \(h=20\times 0.7002=14.00\text{ m}\).</li></ol>
+  <button class="next">Next step</button>
+</div></section>
+
+<section data-s="ex2" data-n="Example 2"><div class="card glass">
+  <span class="chip">30 to 36 min</span><h2>Example 2: angle of depression</h2>
+  <p>From the top of a 40 m cliff, a boat is seen 75 m from the foot of the cliff. Find the angle of depression to the nearest degree.</p>
+  <ol class="steps"><li class="show">Mark \(\theta\) below the horizontal at the cliff top.</li><li>Alternate angles: the angle at the boat is also \(\theta\).</li><li>\(\tan\theta=\dfrac{\text{Opp}}{\text{Adj}}=\dfrac{40}{75}=0.5333\)</li><li>\(\theta=\tan^{-1}(0.5333)\approx 28^\circ\)</li></ol>
+  <button class="next">Next step</button>
+</div></section>
+
+<section data-s="ta" data-n="Groups"><div class="card glass">
+  <span class="chip">36 to 50 min</span><h2>Group tasks</h2>
+  <p>Roles: sketcher, calculator, checker, presenter.</p>
+  <div class="btns"><button data-sc="ta" class="on">Task A</button><button data-sc="tb">Task B</button></div>
+  <div class="task" data-for="ta"><p>A boy whose eye level is 1.5 m above the ground stands 24 m from a building. The angle of elevation of the top is \(38^\circ\). Find the height of the building to 2 decimal places.</p>
+    <div class="ans"><input type="number" inputmode="decimal" enterkeyhint="done" step="any" data-a="20.25" data-tol=".02" aria-label="Height in metres"> m <button class="chk">Check</button></div>
+    <p class="fb" data-ok="\(24\tan 38^\circ+1.5=18.75+1.5=20.25\text{ m}\)"></p></div>
+  <div class="task" data-for="tb" hidden><p>From the top of a lighthouse 45 m above sea level, a canoe is seen 60 m from its base. Find the angle of depression to the nearest degree.</p>
+    <div class="ans"><input type="number" inputmode="decimal" enterkeyhint="done" step="any" data-a="37" data-tol=".5" aria-label="Angle in degrees"> degrees <button class="chk">Check</button></div>
+    <p class="fb" data-ok="\(\tan\theta=\dfrac{45}{60}=0.75,\ \theta=\tan^{-1}(0.75)\approx 37^\circ\)"></p></div>
+</div></section>
+
+<section data-s="q1" data-n="Your turn"><div class="card glass">
+  <span class="chip">50 to 60 min</span><h2>Your turn</h2>
+  <div class="btns"><button data-sc="q1" class="on">Question 1</button><button data-sc="q2">Question 2</button></div>
+  <div class="task" data-for="q1"><p>A ladder 8 m long leans against a vertical wall and makes an angle of elevation of \(62^\circ\) with the ground. How high up the wall does it reach (2 decimal places)?</p>
+    <div class="ans"><input type="number" inputmode="decimal" enterkeyhint="done" step="any" data-a="7.06" data-tol=".02" aria-label="Height in metres"> m <button class="chk">Check</button></div>
+    <p class="fb" data-ok="\(8\sin 62^\circ=7.06\text{ m}\)"></p></div>
+  <div class="task" data-for="q2" hidden><p>From a balcony 12 m above the ground, the angle of depression of a parked car is \(25^\circ\). Find the car's horizontal distance from the building (2 decimal places).</p>
+    <div class="ans"><input type="number" inputmode="decimal" enterkeyhint="done" step="any" data-a="25.73" data-tol=".02" aria-label="Distance in metres"> m <button class="chk">Check</button></div>
+    <p class="fb" data-ok="\(\dfrac{12}{\tan 25^\circ}=25.73\text{ m}\)"></p></div>
+  <h3>Take-home</h3>
+  <p class="small">From the top of a 30 m building, the angle of elevation of the top of a nearby mast is \(41^\circ\) and the angle of depression of its foot is \(34^\circ\). Find (a) the horizontal distance between the building and the mast, and (b) the height of the mast.</p>
+</div></section>
+</main>
+
+<script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
