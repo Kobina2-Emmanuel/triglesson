@@ -6,7 +6,14 @@
 <title>Angles of Elevation and Depression | Interactive Lesson</title>
 <meta name="description" content="A 3D interactive Core Mathematics lesson on angles of elevation and depression.">
 <meta name="theme-color" content="#0b6e4f">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
+<script>
+/* apply saved settings before first paint so there is no light flash in dark mode */
+(function(){try{var s=JSON.parse(localStorage.getItem('angles-settings')||'{}'),r=document.documentElement,
+dark=s.theme==='dark'||(s.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+r.dataset.theme=dark?'dark':'light';if(s.size)r.dataset.size=s.size;if(s.motion)r.dataset.motion='reduce';
+if(dark){var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#0c1f19'}}catch(e){}})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -16,7 +23,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -48,21 +55,35 @@
     <div class="sb-title"><b>Elevation and Depression</b><small>Core Mathematics</small></div>
   </div>
   <nav id="steps" aria-label="Lesson steps"></nav>
-  <div class="sb-foot"><span>Steps visited</span><b id="sbcount">0 / 9</b></div>
+  <div class="sb-foot"><span>Steps visited</span><b id="sbcount">0 / 10</b></div>
 </aside>
 
 <header class="glass">
   <button id="sbtoggle" class="icon" type="button" aria-label="Toggle lesson menu" aria-expanded="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
   <b>Elevation and Depression</b>
+  <button id="settoggle" class="icon gear" type="button" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   <div class="prog"><i id="pg"></i></div>
 </header>
+
+<div id="settings" class="glass" role="dialog" aria-label="Settings" hidden>
+  <h2>Settings</h2>
+  <div class="set-row"><span class="set-l" id="l-theme">Theme</span>
+    <div class="seg" role="radiogroup" aria-labelledby="l-theme" data-key="theme">
+      <button type="button" role="radio" data-v="light">Light</button><button type="button" role="radio" data-v="dark">Dark</button><button type="button" role="radio" data-v="auto">Auto</button></div></div>
+  <div class="set-row"><span class="set-l" id="l-size">Text size</span>
+    <div class="seg" role="radiogroup" aria-labelledby="l-size" data-key="size">
+      <button type="button" role="radio" data-v="small">Small</button><button type="button" role="radio" data-v="normal">Normal</button><button type="button" role="radio" data-v="large">Large</button></div></div>
+  <label class="sw"><input id="set-motion" type="checkbox"> Reduce motion</label>
+  <button id="set-reset" type="button" class="reset">Reset progress</button>
+  <p class="small">Settings are saved on this device.</p>
+</div>
 
 <main>
 <section data-s="rpk" data-n="Review"><div class="card glass">
   <span class="chip">0 to 4 min</span><h2>Recall the right-angled triangle</h2>
   <p>In \(\triangle ABC\), right-angled at \(B\), sides are named from angle \(\theta\) at \(A\): \(|AC|\) is the hypotenuse, \(|CB|\) the opposite and \(|AB|\) the adjacent.</p>
   <div class="eq">\[\sin\theta=\frac{\text{Opp}}{\text{Hyp}}\qquad\cos\theta=\frac{\text{Adj}}{\text{Hyp}}\qquad\tan\theta=\frac{\text{Opp}}{\text{Adj}}\]</div>
-  <p>To find an angle, use the inverse: \(\theta=\tan^{-1}\!\left(\dfrac{\text{Opp}}{\text{Adj}}\right)\). Set your calculator to Degree mode: \(\tan 45^\circ\) must give \(1\).</p>
+  <p>To find an angle, use the inverse: \(\theta=\tan^{-1}\!\left(\dfrac{\text{Opp}}{\text{Adj}}\right)\).</p>
   <div class="q" data-a="CB"><h3>Which side is opposite \(\theta\)?</h3>
     <button data-v="AB">\(|AB|\)</button> <button data-v="CB">\(|CB|\)</button> <button data-v="AC">\(|AC|\)</button><p class="fb"></p></div>
 </div></section>
@@ -80,8 +101,8 @@
 
 <section data-s="d0" data-n="Demo"><div class="card glass">
   <span class="chip">6 to 13 min</span><h2>Watch Kwame and Ama</h2>
-  <p>Kwame is the observer. Ama is the three-storey block. Step through, then discuss in your groups.</p>
-  <div class="btns"><button data-sc="d0" class="on">1 Straight ahead</button><button data-sc="d1">2 Raise head</button><button data-sc="d2">3 Lower head</button><button data-sc="d3">4 Ama on the roof</button></div>
+  <p>Kwame is the observer. Ama is standing on a three-storey block. Step through, then discuss in your groups.</p>
+  <div class="btns"><button data-sc="d0" class="on">1. Straight ahead</button><button data-sc="d1">2. Raise head</button><button data-sc="d2">3. Lower head</button><button data-sc="d3">4. Ama on the roof</button></div>
   <ol class="small"><li>Which three directions did Kwame look, and which was his starting line?</li><li>What figure formed between his straight look and his new line of sight?</li><li>In Step 4, how did the two head movements compare?</li></ol>
   <button id="name" class="main">Name the angles</button>
   <p id="named" hidden>The angle <b>above</b> the horizontal is the <b>angle of elevation</b>. The angle <b>below</b> it is the <b>angle of depression</b>.</p>
@@ -141,6 +162,7 @@
     <p class="fb" data-ok="\(\tan\theta=\dfrac{45}{60}=0.75,\ \theta=\tan^{-1}(0.75)\approx 37^\circ\)"></p></div>
 </div></section>
 
+
 <section data-s="q1" data-n="Your turn"><div class="card glass">
   <span class="chip">50 to 60 min</span><h2>Your turn</h2>
   <div class="btns"><button data-sc="q1" class="on">Question 1</button><button data-sc="q2">Question 2</button></div>
@@ -153,6 +175,29 @@
   <h3>Take-home</h3>
   <p class="small">From the top of a 30 m building, the angle of elevation of the top of a nearby mast is \(41^\circ\) and the angle of depression of its foot is \(34^\circ\). Find (a) the horizontal distance between the building and the mast, and (b) the height of the mast.</p>
 </div></section>
+<section data-s="quiz" data-n="Quiz"><div class="card glass">
+  <span class="chip">Final check</span><h2>End-of-lesson quiz</h2>
+  <div id="quiz">
+    <div class="qz-start">
+      <p>Eight questions on elevation, depression and the trig ratios. Pick an answer to see the explanation. A calculator in Degree mode is needed.</p>
+      <p class="small" id="qbest" hidden></p>
+      <button id="qstart" class="main" type="button">Start quiz</button>
+    </div>
+    <div class="qz-run" hidden>
+      <div class="qz-top"><span id="qnum"></span><span id="qscore"></span></div>
+      <div class="qz-bar"><i id="qbar"></i></div>
+      <h3 id="qtext" tabindex="-1"></h3>
+      <div id="qopts" class="qz-opts" role="group" aria-labelledby="qtext"></div>
+      <p id="qfb" class="fb" role="status" aria-live="polite"></p>
+      <button id="qnext" class="next" type="button" hidden>Next question</button>
+    </div>
+    <div class="qz-end" hidden>
+      <p class="qz-big" id="qresult"></p>
+      <p id="qmsg"></p>
+      <div class="btns"><button id="qagain" class="main" type="button">Try again</button><button id="qtop" type="button">Back to start</button></div>
+    </div>
+  </div>
+</div></section>
 </main>
 
 <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -160,4 +205,4 @@
 <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="script.js"></script>
 </body>
-</html>
+</html>

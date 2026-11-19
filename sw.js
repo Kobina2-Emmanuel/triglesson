@@ -2,7 +2,7 @@
    - Own files: network first (so online users always get the latest deploy), cache as fallback.
    - CDN files (Three.js, KaTeX, fonts): cache first. All saved on the first online visit.
    BUMP `VERSION` whenever you deploy changes, so old caches are cleared. */
-const VERSION = 'v1';
+const VERSION = 'v3';
 const CORE = 'angles-core-' + VERSION;
 const CDN = 'angles-cdn-' + VERSION;
 
@@ -17,7 +17,7 @@ const CDN_JS = [
 /* stylesheets: saved, then scanned for the font files they point to */
 const CDN_CSS = [
   'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css',
-  'https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Source+Serif+4:wght@400;600&display=swap'
+  'https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap'
 ];
 const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 

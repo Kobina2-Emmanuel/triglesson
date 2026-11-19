@@ -24,6 +24,8 @@ const mqSide = window.matchMedia('(max-height:500px) and (orientation:landscape)
 const mqTight = window.matchMedia('(max-width:1280px)');
 const mqCoarse = window.matchMedia('(pointer:coarse)');
 const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motionOff = () => mqMotion.matches || document.documentElement.dataset.motion === 'reduce';
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }, del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } } };
 function applyLayout() {
   const c = document.body.classList;
   c.toggle('sheet', mqSheet.matches);
@@ -65,7 +67,9 @@ function initGL() {
 
   const root = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
-  root.add(new THREE.HemisphereLight(0xffffff, 0x9dbdb0, 0.95));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x9dbdb0, 0.95);
+  root.add(hemi);
+  const grounds = [], cloudMats = [];
   const sun = new THREE.DirectionalLight(0xfff1d6, 1.0);
   sun.position.set(-12, 26, 18);
   sun.castShadow = true;
@@ -198,6 +202,7 @@ function initGL() {
   /* ---------- scenery ---------- */
   function addGround(g, r = 34) {
     const d = mesh(new THREE.CircleGeometry(r, 64), M(0xcfe3d8, { flatShading: false, roughness: 0.9 }));
+    grounds.push(d.material);
     d.rotation.x = -Math.PI / 2; d.receiveShadow = true; g.add(d);
     const grid = new THREE.GridHelper(r * 2, r, 0x0b6e4f, 0x0b6e4f);
     grid.material.transparent = true; grid.material.opacity = 0.16; grid.position.y = 0.01; g.add(grid);
@@ -211,6 +216,7 @@ function initGL() {
   }
   function Cloud(x, y, z, s = 1) {
     const g = new THREE.Group(), m = B(0xffffff, { opacity: 0.9 });
+    cloudMats.push(m);
     [[0, 0, 1], [1, -0.1, 0.8], [-1, -0.1, 0.75], [0.4, 0.5, 0.7]].forEach(a => g.add(mesh(new THREE.SphereGeometry(a[2], 12, 8), m, a[0], a[1], 0)));
     g.position.set(x, y, z); g.scale.setScalar(s); g.userData.sp = 0.1 + Math.random() * 0.15; return g;
   }
@@ -855,7 +861,7 @@ function initGL() {
     const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
     for (const k in scenes) if (scenes[k].g.visible) scenes[k].frame(clock, dt);
     if (cur) {
-      const sway = drag.on || mqMotion.matches ? 0 : Math.sin(clock * 0.3) * 0.05;
+      const sway = drag.on || motionOff() ? 0 : Math.sin(clock * 0.3) * 0.05;
       const gt = V3(cur.cam.t[0], cur.cam.t[1], cur.cam.t[2]);
       const gaz = clamp(cur.cam.az + drag.az + sway, -1.5, 1.5), gel = clamp(cur.cam.el + drag.el, -0.2, 1.2), gd = fitDist(cur) * zoom;
       if (snap) { cs.t.copy(gt); cs.az = gaz; cs.el = gel; cs.d = gd; snap = false; }
@@ -882,7 +888,14 @@ function initGL() {
   resize();
   window.addEventListener('resize', resize);
   requestAnimationFrame(frame);
-  return { scenes, show, showHint() { hint.classList.remove('off'); setTimeout(hideHint, 9000); } };
+  /* dark mode: dim the lights, darken the ground and clouds */
+  function setDark(d) {
+    hemi.intensity = d ? 0.62 : 0.95; hemi.color.setHex(d ? 0xbfd8ff : 0xffffff); hemi.groundColor.setHex(d ? 0x2a4a40 : 0x9dbdb0);
+    sun.intensity = d ? 0.6 : 1.0; sun.color.setHex(d ? 0xcfd8ff : 0xfff1d6);
+    grounds.forEach(m => m.color.setHex(d ? 0x1a3a31 : 0xcfe3d8));
+    cloudMats.forEach(m => m.color.setHex(d ? 0x6d8780 : 0xffffff));
+  }
+  return { scenes, show, setDark, showHint() { hint.classList.remove('off'); setTimeout(hideHint, 9000); } };
 }
 
 /* ==========================================================
@@ -922,7 +935,7 @@ function initSplash() {
 function initNav() {
   const secs = $$('main section'), list = $('#steps'), pg = $('#pg'), body = document.body, count = $('#sbcount');
   const toggle = $('#sbtoggle'), choice = {}, items = [], seen = new Set();
-  const defaults = { rpk: 'rpk', obj: 'rpk', concept: 'c0', d0: 'd0', model: 'model', ex1: 'ex1', ex2: 'ex2', ta: 'ta', q1: 'q1' };
+  const defaults = { rpk: 'rpk', obj: 'rpk', concept: 'c0', d0: 'd0', model: 'model', ex1: 'ex1', ex2: 'ex2', ta: 'ta', q1: 'q1', quiz: 'c2' };
   const mobile = isDrawer, sidebar = $('#sidebar');
   const syncAria = () => {
     const open = mobile() ? body.classList.contains('sb-open') : !body.classList.contains('sb-collapsed');
@@ -1063,6 +1076,106 @@ function initLesson() {
   });
 }
 
+/* ==========================================================
+   Settings: theme, text size, reduced motion, reset
+   ========================================================== */
+function initSettings() {
+  const root = document.documentElement, panel = $('#settings'), btn = $('#settoggle'), meta = $('meta[name=theme-color]');
+  const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const st = Object.assign({ theme: 'light', size: 'normal', motion: false }, store.get('angles-settings') || {});
+  const apply = () => {
+    const dark = st.theme === 'dark' || (st.theme === 'auto' && mqDark.matches);
+    root.dataset.theme = dark ? 'dark' : 'light';
+    if (st.size === 'normal') delete root.dataset.size; else root.dataset.size = st.size;
+    if (st.motion) root.dataset.motion = 'reduce'; else delete root.dataset.motion;
+    if (meta) meta.content = dark ? '#0c1f19' : '#0b6e4f';
+    if (W && W.setDark) W.setDark(dark);
+    $$('.seg', panel).forEach(g => $$('button', g).forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === st[g.dataset.key]))));
+    $('#set-motion').checked = !!st.motion;
+  };
+  const save = () => { store.set('angles-settings', st); apply(); };
+  $$('.seg button', panel).forEach(b => b.addEventListener('click', () => { st[b.parentNode.dataset.key] = b.dataset.v; save(); }));
+  $('#set-motion').addEventListener('change', e => { st.motion = e.target.checked; save(); });
+  mqDark.addEventListener && mqDark.addEventListener('change', () => { if (st.theme === 'auto') apply(); });
+  $('#set-reset').addEventListener('click', () => { store.del('angles-quiz-best'); location.reload(); });
+  const close = () => { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', () => { const open = panel.hidden; panel.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) { const f = $('.seg button[aria-checked=true]', panel); if (f) f.focus({ preventScroll: true }); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { close(); btn.focus(); } });
+  document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) close(); });
+  apply();
+}
+
+/* ==========================================================
+   End-of-lesson quiz
+   ========================================================== */
+const QUIZ = [
+  { q: 'The angle of elevation is measured between the line of sight and the…', a: ['horizontal line through the observer\'s eye', 'vertical line through the object', 'ground directly beneath the object', 'hypotenuse of the triangle'], c: 0,
+    e: 'Both angles are measured from the <b>horizontal</b>, never from a vertical wall, pole or cliff.' },
+  { q: 'From the top of a tower, the angle of depression of a boat is \\(30^\\circ\\). What is the angle of elevation of the tower top, seen from the boat?', a: ['\\(30^\\circ\\)', '\\(60^\\circ\\)', '\\(150^\\circ\\)', 'It cannot be found'], c: 0,
+    e: 'The two horizontals are parallel, so the angles are <b>alternate angles</b> and equal: \\(\\theta_{\\text{depression}}=\\theta_{\\text{elevation}}\\).' },
+  { q: 'An angle of depression opens…', a: ['below the horizontal line of sight', 'above the horizontal line of sight', 'to the left of the vertical', 'between the ground and the wall'], c: 0,
+    e: 'Look <b>down</b> and the angle opens below the horizontal. Look <b>up</b> and it opens above.' },
+  { q: 'A tree stands on level ground. From a point 15 m away, the angle of elevation of its top is \\(40^\\circ\\). Find the height of the tree (2 d.p.). Ignore eye height.', a: ['12.59 m', '17.88 m', '9.64 m', '11.49 m'], c: 0,
+    e: '\\(\\tan 40^\\circ=\\dfrac{h}{15}\\Rightarrow h=15\\tan 40^\\circ=12.59\\text{ m}\\). The tree is opposite and the 15 m is adjacent, so use tan.' },
+  { q: 'From the top of a 50 m cliff, the angle of depression of a boat is \\(20^\\circ\\). How far is the boat from the foot of the cliff (2 d.p.)?', a: ['137.37 m', '18.20 m', '17.10 m', '146.19 m'], c: 0,
+    e: 'The angle at the boat is also \\(20^\\circ\\). \\(\\tan 20^\\circ=\\dfrac{50}{d}\\Rightarrow d=\\dfrac{50}{\\tan 20^\\circ}=137.37\\text{ m}\\).' },
+  { q: 'A kite string 50 m long is taut and makes an angle of elevation of \\(50^\\circ\\) with level ground. How high is the kite (2 d.p.)?', a: ['38.30 m', '32.14 m', '59.59 m', '65.27 m'], c: 0,
+    e: 'The string is the hypotenuse and the height is opposite. \\(\\sin 50^\\circ=\\dfrac{h}{50}\\Rightarrow h=50\\sin 50^\\circ=38.30\\text{ m}\\).' },
+  { q: 'A pole 18 m tall stands 30 m from an observer on level ground. Find the angle of elevation of its top, to the nearest degree.', a: ['\\(31^\\circ\\)', '\\(37^\\circ\\)', '\\(59^\\circ\\)', '\\(69^\\circ\\)'], c: 0,
+    e: '\\(\\tan\\theta=\\dfrac{18}{30}=0.6\\Rightarrow\\theta=\\tan^{-1}(0.6)\\approx 31^\\circ\\). Use tan because you know the opposite and adjacent sides.' },
+  { q: 'A girl whose eye level is 1.6 m above the ground stands 20 m from a building. The angle of elevation of its top is \\(35^\\circ\\). Find the height of the building (2 d.p.).', a: ['15.60 m', '14.00 m', '12.40 m', '30.16 m'], c: 0,
+    e: '\\(20\\tan 35^\\circ=14.00\\). That is the height above her <b>eye</b>, so add her eye height: \\(14.00+1.6=15.60\\text{ m}\\).' }
+];
+function initQuiz() {
+  const $q = id => document.getElementById(id), root = $q('quiz');
+  if (!root) return;
+  const start = $('.qz-start', root), run = $('.qz-run', root), end = $('.qz-end', root);
+  const KEY = 'angles-quiz-best';
+  let order, i, score, locked;
+  const show = p => { start.hidden = p !== start; run.hidden = p !== run; end.hidden = p !== end; };
+  const shuffle = arr => { const a = arr.slice(); for (let k = a.length - 1; k > 0; k--) { const r = Math.floor(Math.random() * (k + 1)); [a[k], a[r]] = [a[r], a[k]]; } return a; };
+  const showBest = () => { const b = store.get(KEY), el = $q('qbest'); el.hidden = b == null; if (b != null) el.textContent = 'Your best score: ' + b + ' / ' + QUIZ.length; };
+  const render = () => {
+    const it = QUIZ[i]; locked = false;
+    $q('qnum').textContent = 'Question ' + (i + 1) + ' of ' + QUIZ.length;
+    $q('qscore').textContent = 'Score ' + score;
+    $q('qbar').style.width = (i / QUIZ.length * 100) + '%';
+    $q('qtext').innerHTML = it.q;
+    const box = $q('qopts'); box.innerHTML = '';
+    shuffle(it.a.map((t, k) => ({ t, ok: k === it.c }))).forEach(o => {
+      const b = document.createElement('button'); b.type = 'button'; b.innerHTML = o.t; b.dataset.ok = o.ok ? '1' : '';
+      b.addEventListener('click', () => pick(b)); box.appendChild(b);
+    });
+    const fb = $q('qfb'); fb.className = 'fb'; fb.innerHTML = '';
+    $q('qnext').hidden = true;
+    typeset($q('qtext')); typeset(box);
+  };
+  const pick = b => {
+    if (locked) return; locked = true;
+    const ok = !!b.dataset.ok, it = QUIZ[i], fb = $q('qfb');
+    $$('#qopts button').forEach(x => { x.disabled = true; if (x.dataset.ok) x.classList.add('ok'); });
+    if (!ok) b.classList.add('bad'); else { score++; $q('qscore').textContent = 'Score ' + score; confetti(b); }
+    fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+    fb.innerHTML = (ok ? 'Correct. ' : 'Not quite. ') + it.e;
+    typeset(fb);
+    const nx = $q('qnext'); nx.hidden = false; nx.textContent = i + 1 >= QUIZ.length ? 'See results' : 'Next question'; nx.focus({ preventScroll: true });
+  };
+  const finish = () => {
+    const n = QUIZ.length, best = store.get(KEY);
+    if (best == null || score > best) store.set(KEY, score);
+    $q('qresult').textContent = score + ' / ' + n;
+    $q('qmsg').textContent = score === n ? 'Perfect. You have mastered elevation and depression.' : score >= 6 ? 'Well done. Review the questions you missed and try for full marks.' : score >= 4 ? 'Good start. Revisit the examples, then try again.' : 'Go back through Examples 1 and 2 and the sightline model, then try again.';
+    show(end); showBest();
+    if (score >= 6) confetti($q('qresult'));
+  };
+  const begin = () => { i = 0; score = 0; show(run); render(); $q('qtext').focus({ preventScroll: true }); };
+  $q('qstart').addEventListener('click', begin);
+  $q('qagain').addEventListener('click', begin);
+  $q('qtop').addEventListener('click', () => { show(start); showBest(); });
+  $q('qnext').addEventListener('click', () => { if (i + 1 >= QUIZ.length) finish(); else { i++; render(); $q('qtext').focus({ preventScroll: true }); } });
+  show(start); showBest();
+}
+
 /* ---------- boot ---------- */
 typeset(document.body);
 window.addEventListener('resize', applyLayout); /* registered first so body classes update before the 3D resize runs */
@@ -1072,6 +1185,8 @@ if (!W) { const c = $('#c'); if (c) c.style.display = 'none'; }
 initSplash();
 initNav();
 initLesson();
+initQuiz();
+initSettings();
 
 /* ---------- offline support ---------- */
 function toast(msg) {
@@ -1090,4 +1205,4 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('offline', () => toast('You are offline. The lesson still works.'));
   window.addEventListener('online', () => toast('Back online.'));
 }
-})();
+})();
